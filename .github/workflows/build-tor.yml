@@ -1,30 +1,74 @@
 name: Tor Binary Builder
-on: [workflow_dispatch]
+
+on:
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Install Architecture Tools
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y qemu-user-static binfmt-support
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Build Tor inside ARMhf Container
-      run: |
-        docker run --rm --privileged -v ${{ github.workspace }}:/dist multiarch/debian-debootstrap:armhf-bullseye /bin/bash -c "
-          apt-get update && apt-get install -y build-essential libssl-dev libevent-dev zlib1g-dev wget ca-certificates
-          cd /tmp
-          wget --no-check-certificate https://www.torproject.org/dist/tor-0.4.9.15.tar.gz
-          tar -xf tor-0.4.9.15.tar.gz
-          cd tor-0.4.9.15
-          ./configure --disable-asciidoc
-          make -j$(nproc)
-          cp src/app/main/tor /dist/tor-ch
-        "
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-    - name: Upload Finished Binary
-      uses: actions/upload-artifact@v4
-      with:
-        name: tor-binary-armhf
-        path: tor-ch
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Compile Tor in ARMhf Container
+        uses: docker/bake-action@v4
+        with:
+          files: |
+            # Hier definieren wir den Container und die Build-Schritte
+          targets: build
+
+      - name: Compile Tor inside Docker (ARMhf)
+        run: |
+          docker run --rm --platform linux/arm/v7 \
+            -v ${{ github.workspace }}:/work \
+            multiarch/debian-debootstrap:armhf-bullseye \
+            bash -c "
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update && apt-get install -y \
+                build-essential \
+                libevent-dev \
+                libssl-dev \
+                zlib1g-dev \
+                wget \
+                ca-certificates \
+                make
+
+              cd /work
+              
+              # Falls noch nicht geschehen, Quellcode herunterladen und entpacken
+              if [ ! -d \"tor-0.4.9.15\" ]; then
+                wget --no-check-certificate https://dist.torproject.org/tor-0.4.9.15.tar.gz
+                tar -xzf tor-0.4.9.15.tar.gz
+              fi
+
+              cd tor-0.4.9.15
+              ./configure --disable-asciidoc
+              make -j$(nproc)
+            "
+
+      - name: Copy Tor binary safely
+        run: |
+          mkdir -p /dist
+          # Sucht automatisch nach der kompilierten 'tor'-Datei im Quellcode-Ordner
+          TOR_BIN=$(find . -name "tor" -type f -path "*/src/*" | head -n 1)
+          
+          if [ -z "$TOR_BIN" ]; then
+            echo "Fehler: Tor-Binärdatei wurde nicht gefunden!"
+            exit 1
+          fi
+          
+          echo "Gefunden unter: $TOR_BIN"
+          cp "$TOR_BIN" /dist/tor-ch
+          chmod +x /dist/tor-ch
+
+      - name: Upload Tor Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tor-binary-armhf
+          path: /dist/tor-ch
