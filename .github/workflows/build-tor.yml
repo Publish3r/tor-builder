@@ -23,6 +23,12 @@ jobs:
             debian:bullseye-slim \
             bash -c "
               export DEBIAN_FRONTEND=noninteractive
+              
+              # Debian Bullseye ist Oldstable - alte Security-Quellen auf Archiv umbiegen, damit 404-Fehler verschwinden
+              echo 'deb http://archive.debian.org/debian bullseye main' > /etc/apt/sources.list
+              echo 'deb http://archive.debian.org/debian-security bullseye-security main' >> /etc/apt/sources.list
+              echo 'Acquire::Check-Valid-Time \"false\";' > /etc/apt/apt.conf.d/99-no-check-valid-time
+
               apt-get update && apt-get install -y \
                 build-essential \
                 libevent-dev \
