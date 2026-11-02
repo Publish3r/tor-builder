@@ -20,7 +20,7 @@ jobs:
         run: |
           docker run --rm --pull always --platform linux/arm/v7 \
             -v ${{ github.workspace }}:/work \
-            multiarch/debian-debootstrap:armhf-bullseye \
+            debian:bullseye-slim \
             bash -c "
               export DEBIAN_FRONTEND=noninteractive
               apt-get update && apt-get install -y \
