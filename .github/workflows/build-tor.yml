@@ -16,13 +16,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and Compile Tor in ARMhf Container
-        uses: docker/bake-action@v4
-        with:
-          files: |
-            # Hier definieren wir den Container und die Build-Schritte
-          targets: build
-
       - name: Compile Tor inside Docker (ARMhf)
         run: |
           docker run --rm --platform linux/arm/v7 \
@@ -41,7 +34,7 @@ jobs:
 
               cd /work
               
-              # Falls noch nicht geschehen, Quellcode herunterladen und entpacken
+              # Quellcode herunterladen und entpacken, falls noch nicht geschehen
               if [ ! -d \"tor-0.4.9.15\" ]; then
                 wget --no-check-certificate https://dist.torproject.org/tor-0.4.9.15.tar.gz
                 tar -xzf tor-0.4.9.15.tar.gz
