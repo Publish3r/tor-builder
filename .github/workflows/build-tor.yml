@@ -18,7 +18,7 @@ jobs:
 
       - name: Compile Tor inside Docker (ARMhf)
         run: |
-          docker run --rm --platform linux/arm/v7 \
+          docker run --rm --pull always --platform linux/arm/v7 \
             -v ${{ github.workspace }}:/work \
             multiarch/debian-debootstrap:armhf-bullseye \
             bash -c "
