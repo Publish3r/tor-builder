@@ -13,9 +13,9 @@ jobs:
     - name: Build Tor inside ARMhf Container
       run: |
         docker run --rm --privileged -v ${{ github.workspace }}:/dist multiarch/debian-debootstrap:armhf-bullseye /bin/bash -c "
-          apt-get update && apt-get install -y build-essential libssl-dev libevent-dev zlib1g-dev wget
+          apt-get update && apt-get install -y build-essential libssl-dev libevent-dev zlib1g-dev wget ca-certificates
           cd /tmp
-          wget https://www.torproject.org/dist/tor-0.4.9.15.tar.gz
+          wget --no-check-certificate https://www.torproject.org/dist/tor-0.4.9.15.tar.gz
           tar -xf tor-0.4.9.15.tar.gz
           cd tor-0.4.9.15
           ./configure --disable-asciidoc
