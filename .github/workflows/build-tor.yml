@@ -3,7 +3,7 @@ name: Tor Binary Builder
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 4 * * *'
+    - cron: '17 11 * * *'
 
 jobs:
   check-version:
